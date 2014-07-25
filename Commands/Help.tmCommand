@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin/ruby -wKU
+puts "Hello world"
+</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>inputFormat</key>
+	<string>text</string>
+	<key>isDisabled</key>
+	<true/>
+	<key>name</key>
+	<string>Help</string>
+	<key>outputCaret</key>
+	<string>afterOutput</string>
+	<key>outputFormat</key>
+	<string>text</string>
+	<key>outputLocation</key>
+	<string>replaceInput</string>
+	<key>scope</key>
+	<string>source.c, source.objc, source.c++, source.objc++, source.java, source.php, source.yacc</string>
+	<key>uuid</key>
+	<string>2F1DA0B8-0D4E-40EB-9AFB-A3624D9618DE</string>
+	<key>version</key>
+	<integer>2</integer>
+</dict>
+</plist>

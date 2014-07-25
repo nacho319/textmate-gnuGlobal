@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>contactEmailRot13</key>
+	<string>vanpvb@naqerj.pzh.rqh</string>
+	<key>contactName</key>
+	<string>Chris Inacio</string>
+	<key>description</key>
+	<string>GNU &lt;a href="https://www.gnu.org/software/global/"&gt;Global&lt;/a&gt; creates a set of indexing for programming languages similar to ctags/etags.  The advantage to using GNU Global is the greater flexibility in searching, such as only for definitions, uses, etc. that GNU Global provides.
+</string>
+	<key>name</key>
+	<string>GNUGlobal</string>
+	<key>uuid</key>
+	<string>DB846BCB-3180-4731-B11F-52D1A5FD3335</string>
+</dict>
+</plist>

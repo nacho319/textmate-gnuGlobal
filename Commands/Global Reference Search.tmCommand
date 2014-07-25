@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+#
+# Copyright (c) 2014, Christopher Inacio
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the Christopher Inacio nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+require 'shellwords'
+
+projectDirectory      =   ENV['TM_PROJECT_DIRECTORY']
+selText               =   ENV['TM_SELECTED_TEXT']
+curWordText           =   ENV['TM_CURRENT_WORD']
+derLine               =   0
+derFile               =   nil
+derExample            =   nil
+searchWord            =   "mooseButt"
+scannerExp            =   /\w+\s+(\d+)\s+([\w\/\.]+)\s+(.*)/
+matchArray            =   nil
+debugOutput           =   false
+
+#
+# heavily borrowed from hg_help.rb from the TextMate Mercurial Bundle
+# Origninally written by:
+# Chris Thomas &amp; Torsten Becker (svn bundle)
+# Ollivier Robert (first hg bundle)
+# Frederic "FredB" Balleriaux
+#
+def htmlize ( string )
+  return string.to_s.gsub ( /&lt;|&gt;|&amp;/ ) do |match|
+    case match
+      when '&lt;'; '&amp;lt;'
+      when '&gt;'; '&amp;gt;'
+      when ' '; '%20'
+      when '&amp;'; '&amp;amp;'
+      else; raise 'in never never land'
+     end
+   end
+end
+
+#
+# taken from hg_help.rb from the TextMate Mercurial Bundle
+# Origninally written by:
+# Chris Thomas &amp; Torsten Becker (svn bundle)
+# Ollivier Robert (first hg bundle)
+# Frederic "FredB" Balleriaux
+#
+# @param filename - string of the filename
+# @param line - optional line number in the file
+#
+def makeTmLink( filename, line=nil )
+   encoded_file_url = ''
+   ('file://'+filename).each_byte do |b|
+      if b.chr =~ /\w/
+         encoded_file_url &lt;&lt; b.chr
+      else
+         encoded_file_url &lt;&lt; sprintf( '%%%02x', b )
+      end
+   end
+   
+   'txmt://open?url=' + encoded_file_url + ((line.nil?) ? '' : '&amp;amp;line='+line.to_s)
+end
+
+
+
+if debugOutput then
+  puts "The project directory is '#{projectDirectory}' &lt;br/&gt;\n"
+end
+
+if selText then
+  searchWord = selText
+elsif curWordText then
+  searchWord = curWordText
+else
+  puts "No selected word or word under caret for searching\n"
+  exit
+end
+
+if debugOutput then
+  puts "textmate selected text is #{ENV['TM_SELECTED_TEXT']} &lt;br/&gt;\n"
+  puts "selText is '#{selText}' curWordText is '#{curWordText}' searchWord is '#{searchWord}' &lt;br/&gt;\n"
+end
+
+if debugOutput then
+  puts "running command global -dxa #{searchWord} &lt;br/&gt;\n"
+end
+globalResults = %x[cd #{projectDirectory} &amp;&amp; $TM_gnuglobal_GLOBAL -rxa #{searchWord}]
+
+if debugOutput then
+  puts "globalResults is '#{globalResults} &lt;br/&gt;\n"
+end
+
+if globalResults.length &gt; 0 then
+  matchResults = globalResults.scan(scannerExp)
+
+  if debugOutput then
+    puts "Then number of results is: #{matchResults.length}"
+    puts "First match line is: #{matchResults[0][0]}"
+    puts "First match file is: #{matchResults[0][1]}"
+    puts "First match example is: #{matchResults[0][2]}"
+  end
+
+  puts "&lt;html&gt;\n&lt;head&gt;\n&lt;title&gt;Matches for #{searchWord}&lt;/title&gt;\n&lt;/head&gt;\n&lt;body&gt;\n"
+
+  puts "&lt;table&gt;\n&lt;tr&gt;&lt;th&gt;File&lt;/th&gt;&lt;th&gt;Match&lt;/th&gt;&lt;/tr&gt;\n"
+  for matchNum in 0..(matchResults.length-1) do
+    derLine = matchResults[matchNum][0]
+    derFile = matchResults[matchNum][1]
+    derExample = matchResults[matchNum][2]
+
+    # txmt://open?url=&lt;filename&gt;&amp;amp;line=&lt;line_number&gt;
+    # puts "&lt;tr&gt;&lt;td&gt;&lt;a href=\"txmt://open?url=#{derFile}&amp;amp;line=#{derLine}\"&gt;#{htmlize(derFile)}&lt;/a&gt;&lt;/td&gt;&lt;td&gt;#{htmlize(derExample)}&lt;/td&gt;&lt;/tr&gt;\n"
+    puts "&lt;tr&gt;&lt;td&gt;&lt;a href=\"#{makeTmLink(derFile,derLine)}}\"&gt;#{htmlize(derFile)}&lt;/a&gt;&lt;/td&gt;&lt;td&gt;#{htmlize(derExample)}&lt;/td&gt;&lt;/tr&gt;\n"
+  end
+  puts "&lt;/table&gt;\n"
+
+
+  #%x[$TM_MATE --line #{derLine} #{derFile}]
+  puts "&lt;/body&gt;\n&lt;/html&gt;\n"
+
+else
+  puts "&lt;html&gt;\n&lt;head&gt;\n&lt;title&gt;No Matches&lt;/title&gt;\n&lt;body&gt;\nNo references found for #{searchWord}\n&lt;/body&gt;\n&lt;/html&gt;\n"
+end
+
+
+
+</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>inputFormat</key>
+	<string>text</string>
+	<key>keyEquivalent</key>
+	<string>@r</string>
+	<key>name</key>
+	<string>Global Word / Selection Reference Search</string>
+	<key>outputCaret</key>
+	<string>afterOutput</string>
+	<key>outputFormat</key>
+	<string>html</string>
+	<key>outputLocation</key>
+	<string>newWindow</string>
+	<key>requiredCommands</key>
+	<array>
+		<dict>
+			<key>command</key>
+			<string>global</string>
+			<key>locations</key>
+			<array>
+				<string>/opt/local/bin/global</string>
+				<string>/usr/local/bin/global</string>
+				<string>$HOME/bin/global</string>
+			</array>
+			<key>moreInfoURL</key>
+			<string>https://www.gnu.org/software/global/</string>
+			<key>variable</key>
+			<string>TM_gnuglobal_GLOBAL</string>
+		</dict>
+	</array>
+	<key>scope</key>
+	<string>(source.c | source.objc | source.c++ | source.objc++ | source.java | source.php | source.yacc) &amp; (dyn.modifier.command &amp; dyn.modifier.shift)</string>
+	<key>uuid</key>
+	<string>7F7CB99C-5E7B-4BFC-A1D7-5C34E53C9A05</string>
+	<key>version</key>
+	<integer>2</integer>
+</dict>
+</plist>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>nop</string>
+	<key>command</key>
+	<string>#!/usr/bin/env ruby
+#
+#
+# Copyright (c) 2014, Christopher Inacio
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the Christopher Inacio nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+require 'shellwords'
+
+projectDirectory      =   ENV['TM_PROJECT_DIRECTORY']
+selText               =   ENV['TM_SELECTED_TEXT']
+curWordText           =   ENV['TM_CURRENT_WORD']
+derLine               =   0
+derFile               =   nil
+searchWord            =   "mooseButt"
+scannerExp            =   /\w+\s+(\d+)\s+([\w\/\.]+)\s+.*/
+matchArray            =   nil
+debugOutput           =   false
+
+if debugOutput then
+  puts "The project directory is '#{projectDirectory}'\n"
+end
+
+if selText then
+  searchWord = selText
+elsif curWordText then
+  searchWord = curWordText
+else
+  puts "No selected word or word under caret for searching\n"
+  exit
+end
+
+if debugOutput then
+  puts "textmate selected text is #{ENV['TM_SELECTED_TEXT']}\n"
+  puts "selText is '#{selText}' curWordText is '#{curWordText}' searchWord is '#{searchWord}'\n"
+end
+
+if debugOutput then
+  puts "running command global -dxa #{searchWord}\n"
+end
+globalResults = %x[cd #{projectDirectory} &amp;&amp; $TM_gnuglobal_GLOBAL -dxa #{searchWord}]
+
+if debugOutput then
+  puts "globalResults is '#{globalResults}' globalResults length is #{globalResults.length}"
+end
+
+if globalResults.length &gt; 0 then
+  matchResults = scannerExp.match(globalResults)
+
+  derLine = matchResults[1]
+  derFile = matchResults[2]
+
+  if debugOutput then
+    puts "The line is #{derLine}\n"
+    puts "The file is #{derFile}\n"
+  end
+
+
+  %x[$TM_MATE --line #{derLine} #{derFile}]
+else
+  puts "No results found for term '#{searchWord}'"
+end
+
+
+
+</string>
+	<key>input</key>
+	<string>selection</string>
+	<key>inputFormat</key>
+	<string>text</string>
+	<key>keyEquivalent</key>
+	<string>@d</string>
+	<key>name</key>
+	<string>Global Word / Selection Definition Search</string>
+	<key>outputCaret</key>
+	<string>afterOutput</string>
+	<key>outputFormat</key>
+	<string>text</string>
+	<key>outputLocation</key>
+	<string>toolTip</string>
+	<key>requiredCommands</key>
+	<array>
+		<dict>
+			<key>command</key>
+			<string>global</string>
+			<key>locations</key>
+			<array>
+				<string>/opt/local/bin/global</string>
+				<string>/usr/local/bin/global</string>
+				<string>$HOME/bin/global</string>
+			</array>
+			<key>moreInfoURL</key>
+			<string>https://www.gnu.org/software/global/</string>
+			<key>variable</key>
+			<string>TM_gnuglobal_GLOBAL</string>
+		</dict>
+	</array>
+	<key>scope</key>
+	<string>(source.c | source.objc | source.c++ | source.objc++ | source.java | source.php | source.yacc) &amp; (dyn.modifier.command &amp; dyn.modifier.shift)</string>
+	<key>uuid</key>
+	<string>BA7EEC89-D274-46E4-9A0E-62D639E50D0C</string>
+	<key>version</key>
+	<integer>2</integer>
+</dict>
+</plist>
